@@ -1,0 +1,4 @@
+name: flume-agent
+summary: Interface between Flume HDFS and Agents
+version: 1
+maintainer: "Big Data Team <bigdata@lists.ubuntu.com>"
