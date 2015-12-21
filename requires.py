@@ -25,9 +25,10 @@ class FlumeRequires(RelationBase):
     @hook('{requires:flume-agent}-relation-changed')
     def changed(self):
         conv = self.conversation()
-        conv.set_state('{relation_name}.available')
+        if self.get_flume_ip() and self.get_flume_port() and self.get_flume_protocol():
+            conv.set_state('{relation_name}.available')
 
-    @hook('{requires:bigdata-hub}-relation-{departed,broken}')
+    @hook('{requires:flume-agent}-relation-{departed,broken}')
     def departed(self):
         conv = self.conversation()
         conv.remove_state('{relation_name}.connected')
@@ -35,13 +36,13 @@ class FlumeRequires(RelationBase):
 
     def get_flume_ip(self):
         conv = self.conversation()
-        conv.get_remote('private-address')
+        return conv.get_remote('private-address')
 
     def get_flume_port(self):
         conv = self.conversation()
-        conv.get_remote('port')
+        return conv.get_remote('port')
         
     def get_flume_protocol(self):
         conv = self.conversation()
-        conv.get_remote('protocol')
+        return conv.get_remote('protocol')
         

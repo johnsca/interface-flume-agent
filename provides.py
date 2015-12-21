@@ -20,32 +20,29 @@ class FlumeProvides(RelationBase):
     scope = scopes.GLOBAL
     relation_name = 'flume-agent'
 
-    def __init__(self, port=None, protocol='avro', **args):
-        self.flume_protocol = protocol
-        self.port = port  # only needed for provides
-        super(FlumeProvides, self).__init__(FlumeProvides.relation_name, **args)
-
     # Use some template magic to declare our relation(s)
-    @hook('{provides:flume-agent}-relation-{joined,changed}')
+    @hook('{provides:flume-agent}-relation-joined')
     def changed(self):
-        self.configure(self.flume_protocol)
+        self.set_state('{relation_name}.connected')
+
+    @hook('{provides:flume-agent}-relation-changed')
+    def changed(self):
         self.set_state('{relation_name}.available')
 
     @hook('{provides:flume-agent}-relation-{broken,departed}')
     def broken(self):
         self.remove_state('{relation_name}.available')
+        self.remove_state('{relation_name}.connected')
 
     # call this method when passed into methods decorated with
     # @when('{relation}.available')
     # to configure the relation data
-    def configure(self, protocol):
+    def send_configuration(self, port, protocol = 'avro'):
         if (protocol not in ['avro']):
             return False
         
-        self.flume_protocol = protocol
-        relation_info = {
-            'port': self.port,
-            'protocol': self.flume_protocol,
-        }
-        self.set_remote(**relation_info)
-
+        conv = self.conversation()
+        conv.set_remote(data = {
+            'port': port,
+            'protocol': protocol,
+        })
