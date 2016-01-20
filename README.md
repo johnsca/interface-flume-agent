@@ -1,84 +1,84 @@
 # Overview
 
-This interface layer handles the communication with Big Data Hub registry service.
+This interface layer handles the communication between the Flume HDFS service and the Flume agents (eg, syslog, tweeter).
+The provider end of the relation provides the sink service where mesages are persisted.
+The other end requires the existence of the provider to function.
 
 
 # Usage
 
-## Requires
-
-Charms connecting to the Big Data Hub can require this interface.
-
-This interface layer will set the following states, as appropriate:
-
-  * `{relation_name}.connected`   The relation to the Big Data Hub has been
-    established, though the service list may not be available yet.  If you
-    are providing a service, you can use the following methods to manage your
-    service registrations:
-      * `register_service(name, data)`
-      * `unregister_service(name, uuid=ALL)`
-
-  * `{relation_name}.available`   The list of provided services is available
-    from the Hub.  You can use the following methods to get information about
-    the provided services:
-      * `provided_services()`  The names of all services provided.
-      * `providers(name)`  All providers for a given service name.
-      * `service(name)`  The earliest registered provider for a given service.
-
-  * `{relation_name}.service.{service_name}`  The given service name has been
-    provided.  You can use the areforementioned methods to get information
-    about the service.
-
-For example, let's say that a charm wants to use HDFS.  It can connect to the
-Big Data Hub and use the following code to wait for HDFS:
-
-```python
-@when('flume.installed', 'hub.service.hdfs')
-def hdfs_ready(hub):
-    hdfs = hub.service('hdfs')
-    flume.configure_hdfs(hdfs['ip'], hdfs['port'])
-    flume.start()
-```
-
-A charm providing a NameNode could then use the following to register it:
-
-```python
-@when('hub.connected', 'namenode.ready')
-def register_namenode(hub):
-    namenode = get_namenode_info()
-    hub.register_service('hdfs', {
-        'port': namenode['port'],
-        'webhdfs_port': namenode['webhdfs_port'],
-    })
-```
-
-The data provided for a service will vary depending on the service, but is
-guaranteed to contain an IP address and a UUID.  If the IP address is not
-included in the data used to register the service, the `private-address` for
-the local unit will be resolved and used.  If the UUID is not included, one
-will be generated.
-
-
 ## Provides
 
-A charm providing this interface is providing the Big Data Hub service.
+Charms providing the sink service can make use of the provides interface.
 
 This interface layer will set the following states, as appropriate:
 
-  * `{relation_name}.client` One or more clients have connected.  The charm
-    can tell the client about the registered services using:
-      * `provide_services(services)`
+  * `{relation_name}.connected`   The relation to a Flume agent has been
+    established, though the service list may not be available yet. At this point the
+    provider should broadcast the connection properties using:
+      * `send_configuration(self, port, protocol = 'avro')`
 
-  * `{relation_name}.provider` One or more services have been registered as
-    being provided.  The charm can get the mapping of provided services with:
-      * `registered_services()`
+  * `{relation_name}.available`   The connection to the agent is now availuable and correctly setup.
+
+
+Flume-HDFS is a charm that persists data from various agents. As soon a an agent get connected
+the charm provides the connection details (port):
+
+```python
+@when('hadoop.ready', 'flume-agent.connected')
+@when_not('flume-agent.available')
+def waiting_availuable_flume(hadoop, flume_agent):
+    flume_agent.send_configuration(hookenv.config()['source_port'])
+    hookenv.status_set('waiting', 'Waiting for a Flume agent to become available')
+```
+
+When the agent becomes available, the Flume sink service is started.
+
+```python
+@when('flumehdfs.installed', 'hadoop.ready', 'flume-agent.available')
+@when_not('flumehdfs.started')
+def configure_flume(hdfs, flume_agent_rel):
+    hookenv.status_set('maintenance', 'Setting up Flume')
+    flume = Flume(get_dist_config())
+    flume.configure_flume()
+    flume.restart()
+    set_state('flumehdfs.started')
+    hookenv.status_set('active', 'Ready')
+```
+
+
+## Requires
+
+A Flume agent charm acting as a source of information requires a Flume sink.
+The Flume agent makes use of the requires part of the interface to connect to the
+Flume sink.
+
+This interface layer will set the following states, as appropriate:
+
+  * `{relation_name}.connected` The charm has connected to the Flume sink. 
+    At this point the requires intrface waits for connection details (port, ip, protocol).
+
+  * `{relation_name}.available` The connection has been established, and the agent charm
+    can get the connection details via the following calls:
+      * `get_flume_ip()`
+      * `get_flume_port()`
+      * `get_flume_protocol()`
 
 Example:
 
 ```python
-@when('hub.client', 'hub.provider')
-def provide_services(clients, providers):
-    clients.provide_services(providers.registered_services())
+@when('flumesyslog.installed', 'flume-agent.connected')
+@when_not('flume-agent.available')
+def waiting_for_flume_available(flume):
+    hookenv.status_set('waiting', 'Waiting for availability of Flume HDFS')
+
+
+@when('flumesyslog.installed', 'flume-agent.available')
+@when_not('flumesyslog.started')
+def configure_flume(flumehdfs):
+    port = flumehdfs.get_flume_port()
+    ip = flumehdfs.get_flume_ip()
+    protocol = flumehdfs.get_flume_protocol()
 ```
 
 
