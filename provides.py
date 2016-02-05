@@ -22,7 +22,7 @@ class FlumeProvides(RelationBase):
 
     # Use some template magic to declare our relation(s)
     @hook('{provides:flume-agent}-relation-joined')
-    def changed(self):
+    def joined(self):
         self.set_state('{relation_name}.connected')
 
     @hook('{provides:flume-agent}-relation-changed')
