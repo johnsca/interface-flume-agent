@@ -29,7 +29,7 @@ class FlumeProvides(RelationBase):
     def changed(self):
         self.set_state('{relation_name}.available')
 
-    @hook('{provides:flume-agent}-relation-{broken,departed}')
+    @hook('{provides:flume-agent}-relation-{departed}')
     def broken(self):
         self.remove_state('{relation_name}.available')
         self.remove_state('{relation_name}.connected')
