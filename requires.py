@@ -28,27 +28,30 @@ class FlumeRequires(RelationBase):
         if self.get_flume_ip() and self.get_flume_port() and self.get_flume_protocol():
             conv.set_state('{relation_name}.available')
 
-    @hook('{requires:flume-agent}-relation-{departed}')
+    @hook('{requires:flume-agent}-relation-departed')
     def departed(self):
         conv = self.conversation()
         conv.remove_state('{relation_name}.connected')
         conv.remove_state('{relation_name}.available')
 
+
     def get_flume_ip(self):
-        for conv in self.conversations():
-            return conv.get_remote('private-address')
+        if not self.conversations():
+            raise Exception("No remote private address set.")
         
-        raise Exception("No remote private address set.")
+        return self.conversations()[0].get_remote('private-address')
+
 
     def get_flume_port(self):
-        for conv in self.conversations():
-            return conv.get_remote('port')
-
-        raise Exception("No remote port set.")
+        if not self.conversations():
+            raise Exception("No remote port set.")
         
+        return self.conversations()[0].get_remote('port')
+    
+            
     def get_flume_protocol(self):
-        for conv in self.conversations():
-            return conv.get_remote('protocol')
+        if not self.conversations():
+            raise Exception("No protocol set.")
 
-        raise Exception("No protocol set.")
-        
+        return self.conversations()[0].get_remote('protocol')
+
