@@ -18,7 +18,7 @@ This interface layer will set the following states, as appropriate:
     provider should broadcast the connection properties using:
       * `send_configuration(self, port, protocol = 'avro')`
 
-  * `{relation_name}.available`   The connection to the agent is now availuable and correctly setup.
+  * `{relation_name}.available`   The connection to the agent is now available and correctly setup.
 
 
 Flume-HDFS is a charm that persists data from various agents. As soon a an agent get connected
@@ -63,6 +63,7 @@ This interface layer will set the following states, as appropriate:
       * `get_flume_ip()`
       * `get_flume_port()`
       * `get_flume_protocol()`
+    In case of an error a generic exception is thrown.
 
 Example:
 

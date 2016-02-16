@@ -22,15 +22,16 @@ class FlumeProvides(RelationBase):
 
     # Use some template magic to declare our relation(s)
     @hook('{provides:flume-agent}-relation-joined')
-    def changed(self):
+    def joined(self):
         self.set_state('{relation_name}.connected')
 
     @hook('{provides:flume-agent}-relation-changed')
     def changed(self):
+        self.remove_state('{relation_name}.connected')
         self.set_state('{relation_name}.available')
 
-    @hook('{provides:flume-agent}-relation-{broken,departed}')
-    def broken(self):
+    @hook('{provides:flume-agent}-relation-departed')
+    def departed(self):
         self.remove_state('{relation_name}.available')
         self.remove_state('{relation_name}.connected')
 
