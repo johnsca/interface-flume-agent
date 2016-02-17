@@ -36,22 +36,13 @@ class FlumeRequires(RelationBase):
 
 
     def get_flume_ip(self):
-        if not self.conversations():
-            raise Exception("No remote private address set.")
-        
         return self.conversations()[0].get_remote('private-address')
 
 
     def get_flume_port(self):
-        if not self.conversations():
-            raise Exception("No remote port set.")
-        
         return self.conversations()[0].get_remote('port')
     
             
     def get_flume_protocol(self):
-        if not self.conversations():
-            raise Exception("No protocol set.")
-
         return self.conversations()[0].get_remote('protocol')
 
