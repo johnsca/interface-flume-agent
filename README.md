@@ -56,14 +56,13 @@ Flume sink.
 This interface layer will set the following states, as appropriate:
 
   * `{relation_name}.connected` The charm has connected to the Flume sink. 
-    At this point the requires intrface waits for connection details (port, ip, protocol).
+    At this point the requires interface waits for connection details (port, ip, protocol).
 
   * `{relation_name}.available` The connection has been established, and the agent charm
     can get the connection details via the following calls:
       * `get_flume_ip()`
       * `get_flume_port()`
       * `get_flume_protocol()`
-    In case of an error a generic exception is thrown.
 
 Example:
 
