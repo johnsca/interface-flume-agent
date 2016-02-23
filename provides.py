@@ -38,12 +38,12 @@ class FlumeProvides(RelationBase):
     # call this method when passed into methods decorated with
     # @when('{relation}.available')
     # to configure the relation data
-    def send_configuration(self, port, protocol = 'avro'):
+    def send_configuration(self, port, protocol='avro'):
         if (protocol not in ['avro']):
             return False
-        
+
         conv = self.conversation()
-        conv.set_remote(data = {
+        conv.set_remote(data={
             'port': port,
             'protocol': protocol,
         })
