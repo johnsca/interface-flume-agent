@@ -14,6 +14,7 @@ from charms.reactive import RelationBase
 from charms.reactive import hook
 from charms.reactive import scopes
 
+
 class FlumeRequires(RelationBase):
     scope = scopes.UNIT
 
@@ -25,7 +26,8 @@ class FlumeRequires(RelationBase):
     @hook('{requires:flume-agent}-relation-changed')
     def changed(self):
         conv = self.conversation()
-        if self.get_flume_ip() and self.get_flume_port() and self.get_flume_protocol():
+        if self.get_flume_ip() and self.get_flume_port() \
+           and self.get_flume_protocol():
             conv.set_state('{relation_name}.available')
 
     @hook('{requires:flume-agent}-relation-departed')
@@ -34,15 +36,11 @@ class FlumeRequires(RelationBase):
         conv.remove_state('{relation_name}.connected')
         conv.remove_state('{relation_name}.available')
 
-
     def get_flume_ip(self):
         return self.conversations()[0].get_remote('private-address')
 
-
     def get_flume_port(self):
         return self.conversations()[0].get_remote('port')
-    
-            
+
     def get_flume_protocol(self):
         return self.conversations()[0].get_remote('protocol')
-
