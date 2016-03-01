@@ -21,26 +21,29 @@ class FlumeRequires(RelationBase):
     @hook('{requires:flume-agent}-relation-joined')
     def joined(self):
         conv = self.conversation()
-        conv.set_state('{relation_name}.connected')
+        conv.set_state('{relation_name}.joined')
 
     @hook('{requires:flume-agent}-relation-changed')
     def changed(self):
         conv = self.conversation()
-        if self.get_flume_ip() and self.get_flume_port() \
-           and self.get_flume_protocol():
-            conv.set_state('{relation_name}.available')
+        if self.agents():
+            conv.set_state('{relation_name}.ready')
 
     @hook('{requires:flume-agent}-relation-departed')
     def departed(self):
         conv = self.conversation()
-        conv.remove_state('{relation_name}.connected')
-        conv.remove_state('{relation_name}.available')
+        conv.remove_state('{relation_name}.joined')
+        conv.remove_state('{relation_name}.ready')
 
-    def get_flume_ip(self):
-        return self.conversations()[0].get_remote('private-address')
-
-    def get_flume_port(self):
-        return self.conversations()[0].get_remote('port')
-
-    def get_flume_protocol(self):
-        return self.conversations()[0].get_remote('protocol')
+    def agents(self):
+        agents = []
+        for conv in self.conversations():
+            data = {
+                'name': conv.scope.replace('/', '-'),
+                'host': conv.get_remote('private-address'),
+                'port': conv.get_remote('port'),
+                'protocol': conv.get_remote('protocol'),
+            }
+            if all(data.values()):
+                agents.append(data)
+        return agents
